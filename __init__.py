@@ -94,6 +94,20 @@ class Plugin(BasePlugin):
             # Waiting for stats from peer, but received stats from server. Ignore.
             return
 
+        # Check for exactly 1000 files and 50 folders (suspicious pattern)
+        if num_files == 1000 and num_folders == 50:
+            if user not in self.settings["detected_leechers"]:
+                self.settings["detected_leechers"].append(user)
+            
+            self.probed_users[user] = "pending_leecher"
+            
+            self.log(
+                "Suspicious sharing pattern detected: '%s' has exactly 1000 files in 50 folders (likely fake shares). Will try to ban now or after transfer…",
+                user
+            )
+            self.core.network_filter.ban_user(user)
+            return
+
         is_user_accepted = (num_files >= self.settings["num_files"] and num_folders >= self.settings["num_folders"])
 
         if is_user_accepted or user in self.core.buddies.users:
@@ -110,7 +124,7 @@ class Plugin(BasePlugin):
             if self.core.network_filter.is_user_banned(user):
                 self.core.network_filter.unban_user(user)
                 self.log("User '%s' was banned but now is okay, removed ban.", user)
-                self.send_private(user, "You have been unbanned", show_ui=self.settings["open_private_chat"], switch_page=False)
+                self.send_private(user, "You have been unbanned", show_ui=self.settings.get("open_private_chat", True), switch_page=False)
             return
 
         if not self.probed_users[user].startswith("requesting"):
@@ -179,7 +193,7 @@ class Plugin(BasePlugin):
                 # Replace message placeholders with actual values specified in the plugin settings
                 line = line.replace(placeholder, str(self.settings[option_key]))
 
-            self.send_private(user, line, show_ui=self.settings["open_private_chat"], switch_page=False)
+            self.send_private(user, line, show_ui=self.settings.get("open_private_chat", True), switch_page=False)
             self.core.network_filter.ban_user(user)
 
         if user not in self.settings["detected_leechers"]:
