@@ -193,8 +193,16 @@ class Plugin(BasePlugin):
                 # Replace message placeholders with actual values specified in the plugin settings
                 line = line.replace(placeholder, str(self.settings[option_key]))
 
-            self.send_private(user, line, show_ui=self.settings.get("open_private_chat", True), switch_page=False)
-            self.core.network_filter.ban_user(user)
+            try:
+                self.log("Sending private message to %s", user)
+                self.send_private(
+                    user,
+                    line,
+                    show_ui=self.settings.get("open_private_chat", True),
+                    switch_page=False
+                )
+            except Exception as e:
+                self.log("Failed to send private message to %s: %s", (user, e))
 
         if user not in self.settings["detected_leechers"]:
             self.settings["detected_leechers"].append(user)
