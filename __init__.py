@@ -76,8 +76,8 @@ class Plugin(BasePlugin):
             self.settings["num_folders"] = min_num_folders
 
         self.log(
-            "Require users have a minimum of %d files in %d shared public folders.",
-            (self.settings["num_files"], self.settings["num_folders"])
+            "Requiring users have a minimum of %d files in %d shared public folders...",
+            (self.settings.get("num_files"), self.settings.get("num_folders"))
         )
 
     def check_user(self, user, num_files, num_folders, source="server"):
