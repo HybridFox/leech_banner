@@ -145,14 +145,16 @@ class Plugin(BasePlugin):
             self.core.userbrowse.request_user_shares(user)
             return
 
+        self.probed_users[user] = "pending_leecher"
+
         if self.settings["message"]:
             log_message = ("Leecher detected, '%s' is only sharing %s files in %s folders. Will try to ban now "
-                           "or after transfer…")
+                           "or after transfer and send message…")
+            self.send_pm(user)
         else:
             log_message = ("Leecher detected, '%s' is only sharing %s files in %s folders. Will try to ban now "
                            "or after transfer…")
 
-        self.probed_users[user] = "pending_leecher"
         self.log(log_message, (user, num_files, num_folders))
         self.core.network_filter.ban_user(user)
 
@@ -174,12 +176,12 @@ class Plugin(BasePlugin):
     def user_stats_notification(self, user, stats):
         self.check_user(user, num_files=stats["files"], num_folders=stats["dirs"], source=stats["source"])
 
-    def upload_finished_notification(self, user, *_):
-
+    def send_pm(self, user):
         if user not in self.probed_users:
             return
 
         if self.probed_users[user] != "pending_leecher":
+            self.log("Leecher %s is not a pending_leecher.", user)
             return
 
         self.probed_users[user] = "processed_leecher"
